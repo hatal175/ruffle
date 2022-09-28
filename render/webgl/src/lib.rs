@@ -685,6 +685,22 @@ impl WebGlRenderBackend {
         };
     }
 
+    fn delete_mesh(&self, mesh: &Mesh) {
+        if let Some(gl2) = &self.gl2 {
+            for draw in &mesh.draws {
+                gl2.delete_vertex_array(Some(&draw.vao));
+                gl2.delete_buffer(Some(&draw.vertex_buffer));
+                gl2.delete_buffer(Some(&draw.index_buffer));
+            }
+        } else {
+            for draw in &mesh.draws {
+                self.vao_ext.delete_vertex_array_oes(Some(&draw.vao));
+                self.gl.delete_buffer(Some(&draw.vertex_buffer));
+                self.gl.delete_buffer(Some(&draw.index_buffer));
+            }
+        }
+    }
+
     fn set_stencil_state(&mut self) {
         // Set stencil state for masking, if necessary.
         if self.mask_state_dirty {
@@ -924,6 +940,7 @@ impl RenderBackend for WebGlRenderBackend {
         bitmap_source: &dyn BitmapSource,
         handle: ShapeHandle,
     ) {
+        self.delete_mesh(&self.meshes[handle.0]);
         let mesh = self.register_shape_internal(shape, bitmap_source);
         self.meshes[handle.0] = mesh;
     }
